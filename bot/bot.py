@@ -39,28 +39,29 @@ logger = logging.getLogger(__name__)
 user_semaphores = {}
 user_tasks = {}
 
-HELP_MESSAGE = """Commands:
-⚪ /retry – Regenerate last bot answer
-⚪ /new – Start new dialog
-⚪ /mode – Select chat mode
-⚪ /settings – Show settings
-⚪ /balance – Show balance
-⚪ /help – Show help
+HELP_MESSAGE = """Comandos:
+🚀 /start – Iniciar bot.
+🔄️ /retry – Regenerar la última respuesta.
+💬 /new – Iniciar nuevo diálogo.
+🔃 /mode – Seleccionar un modo de chat.
+🤖 /settings – Seleccionar el modelo de bot.
+⚖️ /balance – Muestra el balance.
+🆘 /help – Mostrar mensaje de ayuda.
 
-🎨 Generate images from text prompts in <b>👩‍🎨 Artist</b> /mode
-👥 Add bot to <b>group chat</b>: /help_group_chat
-🎤 You can send <b>Voice Messages</b> instead of text
+🎨 Generar imágenes a partir de mensajes de texto en <b>👩‍🎨 Mawi Artist</b> /mode
+🎤 Puedes enviar <b>Mensajes de voz</b> en lugar de texto.
+❌ Para cancelar una respuesta en curso envía el comando /cancel.
 """
 
-HELP_GROUP_CHAT_MESSAGE = """You can add bot to any <b>group chat</b> to help and entertain its participants!
+HELP_GROUP_CHAT_MESSAGE = """Puedes añadir el bot a cualquier <b>chat grupal</b> para ayudar y entretener a sus participantes.
 
-Instructions (see <b>video</b> below):
-1. Add the bot to the group chat
-2. Make it an <b>admin</b>, so that it can see messages (all other rights can be restricted)
-3. You're awesome!
+Instrucciones (ver <b>video</b> a continuación):
+1. Añade el bot al chat grupal.
+2. Hazlo administrador para que pueda ver los mensajes (todos los demás derechos pueden ser restringidos).
+3. ¡Eres increíble!
 
-To get a reply from the bot in the chat – @ <b>tag</b> it or <b>reply</b> to its message.
-For example: "{bot_username} write a poem about Telegram"
+Para obtener una respuesta del bot en el chat, @ <b>etiquétalo</b> o <b>responde</b> a su mensaje.
+Por ejemplo: "{bot_username} escribe un poema acerca de Telegram."
 """
 
 
@@ -135,7 +136,7 @@ async def start_handle(update: Update, context: CallbackContext):
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
     db.start_new_dialog(user_id)
 
-    reply_text = "Hi! I'm <b>ChatGPT</b> bot implemented with OpenAI API 🤖\n\n"
+    reply_text = "¡Hola! soy Mawi, tu asistente virtual con IA y estoy para ayudarte en lo que necesites.\n\n"
     reply_text += HELP_MESSAGE
 
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
@@ -169,7 +170,7 @@ async def retry_handle(update: Update, context: CallbackContext):
 
     dialog_messages = db.get_dialog_messages(user_id, dialog_id=None)
     if len(dialog_messages) == 0:
-        await update.message.reply_text("No message to retry 🤷‍♂️")
+        await update.message.reply_text("No hay mensajes para reintentar 🤷‍♂️")
         return
 
     last_dialog_message = dialog_messages.pop()
@@ -209,7 +210,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
         if use_new_dialog_timeout:
             if (datetime.now() - db.get_user_attribute(user_id, "last_interaction")).seconds > config.new_dialog_timeout and len(db.get_dialog_messages(user_id)) > 0:
                 db.start_new_dialog(user_id)
-                await update.message.reply_text(f"Starting new dialog due to timeout (<b>{config.chat_modes[chat_mode]['name']}</b> mode) ✅", parse_mode=ParseMode.HTML)
+                await update.message.reply_text(f"Inicio de un nuevo diálogo debido a un tiempo límite (<b>{config.chat_modes[chat_mode]['name']}</b> modo) ✅", parse_mode=ParseMode.HTML)
         db.set_user_attribute(user_id, "last_interaction", datetime.now())
 
         # in case of CancelledError
@@ -224,7 +225,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             await update.message.chat.send_action(action="typing")
 
             if _message is None or len(_message) == 0:
-                 await update.message.reply_text("🥲 You sent <b>empty message</b>. Please, try again!", parse_mode=ParseMode.HTML)
+                 await update.message.reply_text("🥲 Has enviado <b>un mensaje vacío</b>. Por favor, inténtalo de nuevo.", parse_mode=ParseMode.HTML)
                  return
 
             dialog_messages = db.get_dialog_messages(user_id, dialog_id=None)
@@ -261,7 +262,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
                 try:
                     await context.bot.edit_message_text(answer, chat_id=placeholder_message.chat_id, message_id=placeholder_message.message_id, parse_mode=parse_mode)
                 except telegram.error.BadRequest as e:
-                    if str(e).startswith("Message is not modified"):
+                    if str(e).startswith("El mesaje no ha sido modificado"):
                         continue
                     else:
                         await context.bot.edit_message_text(answer, chat_id=placeholder_message.chat_id, message_id=placeholder_message.message_id)
@@ -286,7 +287,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             raise
 
         except Exception as e:
-            error_text = f"Something went wrong during completion. Reason: {e}"
+            error_text = f"Algo salió mal durante la finalización. Razón: {e}"
             logger.error(error_text)
             await update.message.reply_text(error_text)
             return
@@ -294,9 +295,9 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
         # send message if some messages were removed from the context
         if n_first_dialog_messages_removed > 0:
             if n_first_dialog_messages_removed == 1:
-                text = "✍️ <i>Note:</i> Your current dialog is too long, so your <b>first message</b> was removed from the context.\n Send /new command to start new dialog"
+                text = "✍️ <i>Nota:</i> Su diálogo actual es demasiado largo, por lo que su <b>primer mensaje</b> fue eliminado del contexto.\n Envíe el comando /new para iniciar un nuevo diálogo."
             else:
-                text = f"✍️ <i>Note:</i> Your current dialog is too long, so <b>{n_first_dialog_messages_removed} first messages</b> were removed from the context.\n Send /new command to start new dialog"
+                text = f"✍️ <i>Nota:</i> Su diálogo actual es demasiado largo, así que <b>{n_first_dialog_messages_removed} primeros mensajes</b> fueron eliminados del contexto.\n Envía el comando /new para iniciar un nuevo díalogo."
             await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async with user_semaphores[user_id]:
@@ -306,7 +307,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
         try:
             await task
         except asyncio.CancelledError:
-            await update.message.reply_text("✅ Canceled", parse_mode=ParseMode.HTML)
+            await update.message.reply_text("✅ Cancelado", parse_mode=ParseMode.HTML)
         else:
             pass
         finally:
@@ -319,8 +320,8 @@ async def is_previous_message_not_answered_yet(update: Update, context: Callback
 
     user_id = update.message.from_user.id
     if user_semaphores[user_id].locked():
-        text = "⏳ Please <b>wait</b> for a reply to the previous message\n"
-        text += "Or you can /cancel it"
+        text = "⏳ Por favor <b>espera</b> una respuesta al mensaje anterior\n"
+        text += "O puedes cancelarlo con /cancel"
         await update.message.reply_text(text, reply_to_message_id=update.message.id, parse_mode=ParseMode.HTML)
         return True
     else:
@@ -371,8 +372,8 @@ async def generate_image_handle(update: Update, context: CallbackContext, messag
     try:
         image_urls = await openai_utils.generate_images(message, n_images=config.return_n_generated_images, size=config.image_size)
     except openai.error.InvalidRequestError as e:
-        if str(e).startswith("Your request was rejected as a result of our safety system"):
-            text = "🥲 Your request <b>doesn't comply</b> with OpenAI's usage policies.\nWhat did you write there, huh?"
+        if str(e).startswith("Su solicitud fue rechazada como resultado de nuestro sistema de seguridad"):
+            text = "🥲 Tu solicitud <b>no cumple</b> con las políticas de uso de OpenAI.\n¿Qué has escrito ahí?"
             await update.message.reply_text(text, parse_mode=ParseMode.HTML)
             return
         else:
@@ -410,7 +411,7 @@ async def cancel_handle(update: Update, context: CallbackContext):
         task = user_tasks[user_id]
         task.cancel()
     else:
-        await update.message.reply_text("<i>Nothing to cancel...</i>", parse_mode=ParseMode.HTML)
+        await update.message.reply_text("<i>No hay nada que cancelar...</i>", parse_mode=ParseMode.HTML)
 
 
 def get_chat_mode_menu(page_index: int):
@@ -479,7 +480,7 @@ async def show_chat_modes_callback_handle(update: Update, context: CallbackConte
      try:
          await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
      except telegram.error.BadRequest as e:
-         if str(e).startswith("Message is not modified"):
+         if str(e).startswith("El mensaje no ha sido modificaco"):
              pass
 
 
@@ -511,7 +512,7 @@ def get_settings_menu(user_id: int):
     for score_key, score_value in score_dict.items():
         text += "🟢" * score_value + "⚪️" * (5 - score_value) + f" – {score_key}\n\n"
 
-    text += "\nSelect <b>model</b>:"
+    text += "\nSeleccion un <b>modelo</b>:"
 
     # buttons to choose models
     buttons = []
@@ -554,7 +555,7 @@ async def set_settings_handle(update: Update, context: CallbackContext):
     try:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
+        if str(e).startswith("El mensaje no ha sido modificado"):
             pass
 
 
@@ -586,14 +587,14 @@ async def show_balance_handle(update: Update, context: CallbackContext):
     # image generation
     image_generation_n_spent_dollars = config.models["info"]["dalle-2"]["price_per_1_image"] * n_generated_images
     if n_generated_images != 0:
-        details_text += f"- DALL·E 2 (image generation): <b>{image_generation_n_spent_dollars:.03f}$</b> / <b>{n_generated_images} generated images</b>\n"
+        details_text += f"- DALL·E 2 (generación de imágenes): <b>{image_generation_n_spent_dollars:.03f}$</b> / <b>{n_generated_images} imágenes generadas</b>\n"
 
     total_n_spent_dollars += image_generation_n_spent_dollars
 
     # voice recognition
     voice_recognition_n_spent_dollars = config.models["info"]["whisper"]["price_per_1_min"] * (n_transcribed_seconds / 60)
     if n_transcribed_seconds != 0:
-        details_text += f"- Whisper (voice recognition): <b>{voice_recognition_n_spent_dollars:.03f}$</b> / <b>{n_transcribed_seconds:.01f} seconds</b>\n"
+        details_text += f"- Whisper (reconocimiento de voz): <b>{voice_recognition_n_spent_dollars:.03f}$</b> / <b>{n_transcribed_seconds:.01f} segundos</b>\n"
 
     total_n_spent_dollars += voice_recognition_n_spent_dollars
 
@@ -607,12 +608,13 @@ async def show_balance_handle(update: Update, context: CallbackContext):
 
 async def edited_message_handle(update: Update, context: CallbackContext):
     if update.edited_message.chat.type == "private":
-        text = "🥲 Unfortunately, message <b>editing</b> is not supported"
+        text = "🥲 Desafortunadamente, la <b>edición</b> de mensajes no está soportada"
         await update.edited_message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
 async def error_handle(update: Update, context: CallbackContext) -> None:
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    logger.error(msg="Excepción al gestionar una actualización:",
+                 exc_info=context.error)
 
     try:
         # collect error message
@@ -620,8 +622,8 @@ async def error_handle(update: Update, context: CallbackContext) -> None:
         tb_string = "".join(tb_list)
         update_str = update.to_dict() if isinstance(update, Update) else str(update)
         message = (
-            f"An exception was raised while handling an update\n"
-            f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+            f"Se ha producido una excepción al gestionar una actualización\n"
+            f"<pre>actualización = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
             "</pre>\n\n"
             f"<pre>{html.escape(tb_string)}</pre>"
         )
@@ -634,16 +636,16 @@ async def error_handle(update: Update, context: CallbackContext) -> None:
                 # answer has invalid characters, so we send it without parse_mode
                 await context.bot.send_message(update.effective_chat.id, message_chunk)
     except:
-        await context.bot.send_message(update.effective_chat.id, "Some error in error handler")
+        await context.bot.send_message(update.effective_chat.id, "Algún error en el gestor de errores")
 
 async def post_init(application: Application):
     await application.bot.set_my_commands([
-        BotCommand("/new", "Start new dialog"),
-        BotCommand("/mode", "Select chat mode"),
-        BotCommand("/retry", "Re-generate response for previous query"),
-        BotCommand("/balance", "Show balance"),
-        BotCommand("/settings", "Show settings"),
-        BotCommand("/help", "Show help message"),
+        BotCommand("/new", "Iniciar asistente"),
+        BotCommand("/mode", "Seleccionar un modo de chat"),
+        BotCommand("/retry", "Regenerar la última respuesta"),
+        BotCommand("/balance", "Muestra el balance"),
+        BotCommand("/settings", "Selecciona el modelo de bot"),
+        BotCommand("/help", "Mostrar mensaje de ayuda"),
     ])
 
 def run_bot() -> None:

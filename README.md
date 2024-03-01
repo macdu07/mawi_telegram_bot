@@ -74,7 +74,7 @@ You can deploy your own bot, or use mine: [@chatgpt_karfly_bot](https://t.me/cha
 
 4. 🔥 And now **run**:
     ```bash
-    docker-compose --env-file config/config.env up --build
+    docker compose --env-file config/config.env up --build
     ```
 
 ## ❤️ Top donations
